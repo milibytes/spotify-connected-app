@@ -17,7 +17,7 @@ const port = 8888
 app.get('/', (req,res) => {  // req argument is an object containing info about whats coming in with the request
     const data = {
         name: 'Mili',
-        isTired: true
+        isTired: false
     }
 
     res.json(data)
