@@ -97,7 +97,7 @@ app.get('/callback', (req, res) => {
     // req.query.code would be abc123 
     // req.query.state would be xyz789. 
     // If for some reason the route doesn't have a code query param, we set null as a fallback.
-
+ 
 
     //  Axios library: provides a simpler API. Other than being easy to use, Axios also works both client-side (in the browser) and server-side (in our Express app). [ npm install axios] as a dependency; then require at the top of file
 
@@ -135,7 +135,17 @@ app.get('/callback', (req, res) => {
             .catch((error) => {
               res.send(error);
             });
-  
+
+            // const { refresh_token } = response.data;
+
+            // axios.get(`http://localhost:8888/refresh_token?refresh_token=${refresh_token}`)
+            // .then(response => {
+            //     res.send(`<pre>${JSON.stringify(response.data, null, 2)}</pre>`);
+            // })
+            // .catch(error => {
+            //     res.send(error);
+            // });
+
         } else {
           res.send(response);
         }
@@ -145,8 +155,25 @@ app.get('/callback', (req, res) => {
       });
   });
 
+//  we use the refresh_token to retrieve another access token behind the scenes, not requiring the user log in again
+
+  app.get('/refresh_token', (req, res) => {
+    //  we'll use axios to send a post request to the Spotify /api/token except instead of passing things here like grant type, code and redirect uri, we're going to pass grant type and refresh token.
+    const { refresh_token } = response.data;
+
+    axios.get(`http://localhost:8888/refresh_token?refresh_token=${refresh_token}`)
+      .then(response => {
+        res.send(`<pre>${JSON.stringify(response.data, null, 2)}</pre>`);
+      })
+      .catch(error => {
+        res.send(error);
+      });
+  })
 
 
+
+
+// Example:
 // Code here tells Express to do two things:
 // 1. Handle the get request on the home page/index route
 // 2. Send a 'Hello World' string back with the response
