@@ -89,47 +89,61 @@ app.get('/login', (req, res) => {
 //  STEP 2: Have Spotify return access and refresh tokens
 //  When the authorization code has been received, you will need to exchange it with an access token by making a POST request to the Spotify Accounts service, this time to its /api/token endpoint: POST https://accounts.spotify.com/api/token
 
-app.get('/callback', (req, res) => {  
+app.get('/callback', (req, res) => {
     const code = req.query.code || null; // first we store a code variable , which is the value of the authorization code we have on the query parameter, so to access the code query parameter on our request, we can just use req.query.code and if it doesnt exist, we'll just default to null
+
+    // In Express, req.query is an object containing a property for each query string parameter a route. 
+    // For example, if the route was /callback?code=abc123&state=xyz789: 
+    // req.query.code would be abc123 
+    // req.query.state would be xyz789. 
+    // If for some reason the route doesn't have a code query param, we set null as a fallback.
 
 
     //  Axios library: provides a simpler API. Other than being easy to use, Axios also works both client-side (in the browser) and server-side (in our Express app). [ npm install axios] as a dependency; then require at the top of file
 
-    axios({ 
+
+    axios({
         method: 'post',
-        url: 'https://accounts.spotify.com/api/token', 
-        data: querystring.stringify({
+        url: 'https://accounts.spotify.com/api/token',
+        data: querystring.stringify({ // used to format the 3 required parameters
           grant_type: 'authorization_code',
           code: code,
-          redirect_uri: REDIRECT_URI
+          redirect_uri: REDIRECT_URI,
         }),
         headers: {
-          'content-type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${new Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64')}`,
-        },
-      })
+            'content-type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64')}`,
+          },
+        })
       
-      .then(response => {
+      // STEP 3: Client uses access token to request data from Spotify
+
+      // Modify the .then() callback function to send a GET request to the https://api.spotify.com/v1/me endpoint, which will return detailed profile information about the current user.
+
+      .then((response) => {
         if (response.status === 200) {
-          res.send(`<pre>${JSON.stringify(response.data, null, 2)}</pre>`);
+          const { access_token, token_type } = response.data;
+  
+          axios.get('https://api.spotify.com/v1/me', {
+            headers: {
+              Authorization: `${token_type} ${access_token}`,
+            },
+          })
+            .then((response) => {
+              res.send(`<pre>${JSON.stringify(response.data, null, 2)}</pre>`);
+            })
+            .catch((error) => {
+              res.send(error);
+            });
+  
         } else {
           res.send(response);
         }
       })
-      .catch(error => {
+      .catch((error) => {
         res.send(error);
       });
-    })    
-
-
-
-
-
-
-
-
-
-
+  });
 
 
 
@@ -147,5 +161,3 @@ app.get('/callback', (req, res) => {
 app.listen(port, () => {
     console.log(`Express app listening at http://localhost:${port}`)
 })
-
-// to run this app locally with the terminal, run 'node index.js'
